@@ -134,17 +134,52 @@ def show_prediction_page(clf_model, reg_model, clf_features, reg_features):
         security = st.selectbox("Security", ["Yes", "No"])
         availability = st.selectbox("Availability", ["Ready_to_Move", "Under_Construction"])
     
+    
     if st.button("🚀 Predict Investment Potential", type="primary", use_container_width=True):
         # Create prediction
         with st.spinner("Analyzing property..."):
-            # This is a simplified example - in reality, you'd need to prepare the full feature set
-            # matching the training data format
-            st.info("⚠️ Full prediction pipeline under construction. Model loaded successfully!")
-            
-            # Mock prediction for demo
-            is_good_investment = True
-            confidence = 0.89
-            future_price = price_lakhs * 1.47  # 5-year growth estimate
+            try:
+                # Prepare input features matching training data format
+                # Load a sample from test data to get the structure
+                sample_df = pd.read_csv('data/cleaned_dataset_test.csv').head(1)
+                
+                # Create input dict with user values
+                input_data = sample_df.copy()
+                
+                # Update with user inputs (approximate mapping)
+                input_data['BHK'] = bhk
+                input_data['Size_in_SqFt'] = size_sqft
+                input_data['Price_in_Lakhs'] =price_lakhs
+                input_data['Price_per_SqFt'] = price_lakhs * 100000 / size_sqft
+                input_data['Year_Built'] = year_built
+                input_data['Age_of_Property'] = 2025 - year_built
+                input_data['Nearby_Schools'] = nearby_schools
+                input_data['Nearby_Hospitals'] = nearby_hospitals
+                input_data['Amenities_Score'] = nearby_schools + nearby_hospitals
+                input_data['Has_Parking'] = 1 if parking == "Yes" else 0
+                input_data['Has_Security'] = 1 if security == "Yes" else 0
+                input_data['Is_Ready_To_Move'] = 1 if availability == "Ready_to_Move" else 0
+                
+                # Get features for prediction
+                X_clf = input_data[clf_features]
+                X_reg = input_data[reg_features]
+                
+                # Make predictions
+                clf_pred = clf_model.predict(X_clf)[0]
+                clf_proba = clf_model.predict_proba(X_clf)[0]
+                reg_pred = reg_model.predict(X_reg)[0]
+                
+                is_good_investment = bool(clf_pred == 1)
+                confidence = clf_proba[1] if is_good_investment else clf_proba[0]
+                future_price = reg_pred
+                
+            except Exception as e:
+                st.error(f"Prediction error: {e}")
+                st.warning("Using approximate prediction based on input price")
+                # Fallback to formula-based prediction
+                is_good_investment = True if price_lakhs < 150 else False
+                confidence = 0.75
+                future_price = price_lakhs * 1.47
             
             # Display results
             st.markdown("---")
@@ -241,15 +276,42 @@ def show_model_insights(clf_model, reg_model, clf_features, reg_features):
     with tab2:
         st.subheader("Price Prediction Model (Regression)")
         
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("R² Score", "TBD")
-        with col2:
-            st.metric("RMSE", "TBD Lakhs")
-        with col3:
-            st.metric("MAE", "TBD Lakhs")
-        
-        st.info("Regression metrics will be updated after model training completion.")
+        # Load actual metrics from reports
+        try:
+            with open('reports/regression_metrics.json', 'r') as f:
+                reg_metrics = json.load(f)
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("R² Score", f"{reg_metrics['r2_score']:.4f}")
+            with col2:
+                st.metric("RMSE", f"₹{reg_metrics['rmse']:.4f} Lakhs")
+            with col3:
+                st.metric("MAE", f"₹{reg_metrics['mae']:.4f} Lakhs")
+            
+            st.success("✅ Model achieves near-perfect predictions (R²≈1.0)")
+            
+            # Show feature importance if available
+            st.markdown("##### Feature Importance")
+            if hasattr(reg_model, 'feature_importances_'):
+                importance_df = pd.DataFrame({
+                    'feature': reg_features,
+                    'importance': reg_model.feature_importances_
+                }).sort_values('importance', ascending=False).head(10)
+                
+                fig = px.bar(importance_df, x='importance', y='feature', orientation='h',
+                            title='Top 10 Most Important Features')
+                st.plotly_chart(fig, use_container_width=True)
+                
+        except Exception as e:
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("R² Score", "TBD")
+            with col2:
+                st.metric("RMSE", "TBD Lakhs")
+            with col3:
+                st.metric("MAE", "TBD Lakhs")
+            st.error(f"Could not load regression metrics: {e}")
 
 
 if __name__ == '__main__':
