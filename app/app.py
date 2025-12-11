@@ -121,7 +121,7 @@ def show_prediction_page(clf_model, reg_model, preprocessor, clf_features, reg_f
         property_type = st.selectbox("Property Type", ["Apartment", "Independent House", "Villa"])
         bhk = st.number_input("BHK", min_value=1, max_value=5, value=3)
         size_sqft = st.number_input("Size (Sq.Ft)", min_value=500, max_value=5000, value=1500)
-        price_lakhs = st.number_input("Current Price (Lakhs)", min_value=10, max_ value=500, value=100)
+        price_lakhs = st.number_input("Current Price (Lakhs)", min_value=10, max_value=500, value=100)
         year_built = st.number_input("Year Built", min_value=1990, max_value=2025, value=2015)
         
     with col3:
