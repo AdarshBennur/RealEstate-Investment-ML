@@ -34,8 +34,10 @@ mlruns/
 mlflow.db
 mlartifacts/
 
-# Data (large files)
-*.csv
+# Data# Data files (keep cleaned datasets for deployment)
+# data/
+!data/cleaned_dataset*.csv
+!data/india_housing_prices.csv
 !data/README.md
 
 # IDE
