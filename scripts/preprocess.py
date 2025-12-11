@@ -148,29 +148,42 @@ class RealEstatePreprocessor:
         
         return df
     
+    
     def encode_categorical(self, df, fit=True):
         """Encode categorical variables"""
         print("Encoding categorical variables...")
         
+        # First, handle binary Yes/No columns
+        binary_cols = {'Security': {'Yes': 1, 'No': 0},
+                       'Parking_Space': {'Yes': 1, 'No': 0}}
+        
+        for col, mapping in binary_cols.items():
+            if col in df.columns:
+                df[col] = df[col].map(mapping).fillna(0).astype(int)
+        
+        # Then handle other categorical columns with label encoding
         categorical_cols = ['State', 'City', 'Locality', 'Property_Type', 
                            'Furnished_Status', 'Facing', 'Owner_Type', 
-                           'Availability_Status', 'Public_Transport_Accessibility']
+                           'Availability_Status', 'Public_Transport_Accessibility', 'Amenities']
         
-        # Filter to existing columns
-        categorical_cols = [col for col in categorical_cols if col in df.columns]
+        # Filter to existing columns and avoid already encoded
+        categorical_cols = [col for col in categorical_cols if col in df.columns and col not in binary_cols]
         
         for col in categorical_cols:
-            if fit:
-                self.label_encoders[col] = LabelEncoder()
-                df[col] = self.label_encoders[col].fit_transform(df[col].astype(str))
-            else:
-                if col in self.label_encoders:
-                    # handle unseen labels
-                    le = self.label_encoders[col]
-                    df[col] = df[col].apply(lambda x: le.transform([str(x)])[0] if str(x) in le.classes_ else -1)
+            # Check if column is still object type (string)
+            if df[col].dtype == 'object':
+                if fit:
+                    self.label_encoders[col] = LabelEncoder()
+                    df[col] = self.label_encoders[col].fit_transform(df[col].astype(str))
+                else:
+                    if col in self.label_encoders:
+                        # handle unseen labels
+                        le = self.label_encoders[col]
+                        df[col] = df[col].apply(lambda x: le.transform([str(x)])[0] if str(x) in le.classes_ else -1)
         
-        print(f"Encoded {len(categorical_cols)} categorical columns")
+        print(f"Encoded {len(categorical_cols) + len(binary_cols)} categorical columns")
         return df
+
     
     def handle_outliers(self, df, columns=None):
         """Handle outliers using IQR method"""
