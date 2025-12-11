@@ -54,18 +54,17 @@ st.markdown("""
 # Load models and preprocessor
 @st.cache_resource
 def load_models():
-    """Load trained models and preprocessor"""
+    """Load trained models"""
     try:
-        # Try loading from ML flow first (if available)
-        # For now, load from local files
-        
         clf_model_path = 'models/classification_model.pkl'
         reg_model_path = 'models/regression_model.pkl'
-        preprocessor_path = 'artifacts/preprocessor.pkl'
+        
+        # Check if models exist
+        if not os.path.exists(clf_model_path) or not os.path.exists(reg_model_path):
+            return None, None, None, None
         
         clf_model = joblib.load(clf_model_path)
         reg_model = joblib.load(reg_model_path)
-        preprocessor = joblib.load(preprocessor_path)
         
         # Load feature columns
         with open('models/classification_model_features.json', 'r') as f:
@@ -74,10 +73,10 @@ def load_models():
         with open('models/regression_model_features.json', 'r') as f:
             reg_features = json.load(f)
         
-        return clf_model, reg_model, preprocessor, clf_features, reg_features
+        return clf_model, reg_model, clf_features, reg_features
     except Exception as e:
         st.error(f"Error loading models: {e}")
-        return None, None, None, None, None
+        return None, None, None, None
 
 # Main app
 def main():
@@ -85,10 +84,11 @@ def main():
     st.markdown("### Predicting Property Profitability & Future Value")
     
     # Load models
-    clf_model, reg_model, preprocessor, clf_features, reg_features = load_models()
+    clf_model, reg_model, clf_features, reg_features = load_models()
     
     if clf_model is None:
         st.error("Models not found. Please train the models first.")
+        st.info("Run: `python scripts/train_classification.py && python scripts/train_regression.py`")
         st.stop()
     
     # Sidebar
@@ -96,14 +96,14 @@ def main():
     page = st.sidebar.radio("Go to:", ["Make Prediction", "Dataset Overview", "Model Insights"])
     
     if page == "Make Prediction":
-        show_prediction_page(clf_model, reg_model, preprocessor, clf_features, reg_features)
+        show_prediction_page(clf_model, reg_model, clf_features, reg_features)
     elif page == "Dataset Overview":
         show_dataset_overview()
     else:
         show_model_insights(clf_model, reg_model, clf_features, reg_features)
 
 
-def show_prediction_page(clf_model, reg_model, preprocessor, clf_features, reg_features):
+def show_prediction_page(clf_model, reg_model, clf_features, reg_features):
     """Prediction interface"""
     st.header("🔮 Property Investment Prediction")
     
