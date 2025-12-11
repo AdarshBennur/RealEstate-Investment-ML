@@ -15,6 +15,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # Train models on first run (for Streamlit Cloud)
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 import train_on_startup
 train_on_startup.ensure_models_exist()
 
