@@ -14,12 +14,14 @@ import seaborn as sns
 import plotly.express as px
 import plotly.graph_objects as go
 
-# Train models on first run (for Streamlit Cloud)
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-import train_on_startup
-train_on_startup.ensure_models_exist()
+# NOTE: Auto-training disabled for Streamlit Cloud deployment
+# Training 194K samples takes too long and causes timeout
+# Models should be pre-trained locally and uploaded separately
+# import sys
+# from pathlib import Path
+# sys.path.insert(0, str(Path(__file__).parent.parent))
+# import train_on_startup
+# train_on_startup.ensure_models_exist()
 
 
 # Page config
@@ -95,8 +97,28 @@ def main():
     clf_model, reg_model, clf_features, reg_features = load_models()
     
     if clf_model is None:
-        st.error("Models not found. Please train the models first.")
-        st.info("Run: `python scripts/train_classification.py && python scripts/train_regression.py`")
+        st.error("⚠️ Models not found")
+        st.info("""
+        **For Streamlit Cloud deployment:**
+        
+        The models are too large to train on Streamlit Cloud (timeout after 2 min).
+        Please use Git LFS to upload pre-trained models, or:
+        
+        1. Train models locally:
+           ```bash
+           python scripts/train_classification.py
+           python scripts/train_regression.py
+           ```
+        
+        2. Upload models to cloud storage (Google Drive, S3, etc.)
+        
+        3. Update app to download models on startup
+        
+        **For local testing:**
+        ```bash
+        streamlit run app/app.py
+        ```
+        """)
         st.stop()
     
     # Sidebar
