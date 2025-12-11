@@ -1,0 +1,8 @@
+                 precision    recall  f1-score   support
+
+       Not Good       1.00      1.00      1.00     21171
+Good Investment       1.00      1.00      1.00     27355
+
+       accuracy                           1.00     48526
+      macro avg       1.00      1.00      1.00     48526
+   weighted avg       1.00      1.00      1.00     48526
