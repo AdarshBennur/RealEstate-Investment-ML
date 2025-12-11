@@ -14,6 +14,11 @@ import seaborn as sns
 import plotly.express as px
 import plotly.graph_objects as go
 
+# Train models on first run (for Streamlit Cloud)
+import train_on_startup
+train_on_startup.ensure_models_exist()
+
+
 # Page config
 st.set_page_config(
     page_title="Real Estate Investment Advisor",
